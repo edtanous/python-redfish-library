@@ -18,6 +18,7 @@ import warnings
 import re
 import requests
 import requests_unixsocket
+import httpx
 from redfish.messages import *
 
 from collections import (OrderedDict)
@@ -486,10 +487,11 @@ class RestClientBase(object):
         self.__session_key = sessionkey
         self.__authorization_key = None
         self.__session_location = None
-        if self.__base_url.startswith('http+unix://'):
-            self._session = requests_unixsocket.Session()
-        else:
-            self._session = requests.Session()
+        self._session = httpx.Client(verify=False, http2=True)
+        #if self.__base_url.startswith('http+unix://'):
+        #    self._session = requests_unixsocket.Session()
+        #else:
+        #    self._session = requests.Session()
         self._timeout = timeout
         self._max_retry = max_retry if max_retry is not None else 10
         self._proxies = proxies
@@ -908,8 +910,8 @@ class RestClientBase(object):
                 if self.cafile:
                     verify = self.cafile
                 resp = self._session.request(method.upper(), "{}{}".format(self.__base_url, reqpath), data=body,
-                                             headers=headers, timeout=timeout, allow_redirects=allow_redirects,
-                                             verify=verify, proxies=self._proxies, params=query_str)
+                                             headers=headers, timeout=timeout, follow_redirects=allow_redirects,
+                                             params=query_str)
 
                 if sys.version_info < (3, 3):
                     endtime = time.clock()
